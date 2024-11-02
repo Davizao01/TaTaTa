@@ -3,105 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo de Exemplo</title>
+    <title>Jogo com HUD e Mapa</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            text-align: center;
+            padding: 20px;
         }
-        #map {
-            margin: 20px 0;
-            display: grid;
-            grid-template-columns: repeat(10, 40px);
-            grid-gap: 1px;
-        }
-        .block {
-            width: 40px;
-            height: 40px;
-            border: 1px solid #ccc;
-        }
-        .green { background-color: #4CAF50; }
-        .brown { background-color: #8B4513; }
         #hud {
+            margin-bottom: 20px;
             background-color: #fff;
             padding: 10px;
             border: 1px solid #ccc;
-            width: 200px;
+            display: inline-block;
+        }
+        #mapa {
+            font-family: monospace;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            white-space: pre;
+            text-align: left;
+            margin: 0 auto;
+        }
+        #status {
+            display: none;
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+    <h1>Jogo com HUD e Mapa</h1>
+    
+    <div id="hud">
+        <h2>HUD</h2>
+        <p>Vida: <span id="vida">❤️❤️❤️</span></p>
+        <p>Ki: <span id="ki">🔵🔵🔵</span></p>
+        <p>Resistência: <span id="resistencia">🟣🟣</span></p>
+        <button onclick="mostrarStatus()">Status</button>
+    </div>
 
-<div id="hud">
-    <h3>HUD</h3>
-    <p>Vida: <span id="vida">3</span></p>
-    <p>Ki: <span id="ki">0</span></p>
-    <p>Resistência: <span id="resistencia">0</span></p>
-    <button id="statusButton">Status</button>
-</div>
+    <div id="mapa"></div>
 
-<div id="map"></div>
+    <div id="status">
+        <h2>Status do Jogador</h2>
+        <p>Vida: 3 pontos</p>
+        <p>Ki: 3 pontos</p>
+        <p>Resistência: 2 pontos</p>
+        <button onclick="esconderStatus()">Fechar</button>
+    </div>
 
-<script>
-    let seed = "456Z";
-    let mapa = [];
-    const vida = 3;
-    const ki = 0;
-    const resistencia = 0;
+    <script>
+        // Função para gerar o mapa a partir da seed
+        function gerarMapa(seed) {
+            const map = [];
+            const rows = 10; // Altura do mapa
+            const cols = 10; // Largura do mapa
+            const playerSymbol = '👤';
+            let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
 
-    // Função para gerar o mapa
-    function gerarMapa() {
-        const rows = 10; // número de linhas
-        const cols = 10; // número de colunas
-        for (let i = 0; i < rows; i++) {
-            mapa[i] = [];
-            for (let j = 0; j < cols; j++) {
-                // Lógica para gerar os blocos com base na seed (exemplo simples)
-                if (i < 5) {
-                    mapa[i][j] = 'green'; // Blocos verdes
-                } else {
-                    mapa[i][j] = 'brown'; // Blocos marrons
+            // Geração de mapa usando a seed
+            let random = Math.abs(seed.charCodeAt(0) + seed.charCodeAt(1) + seed.charCodeAt(2));
+            for (let i = 0; i < rows; i++) {
+                let row = '';
+                for (let j = 0; j < cols; j++) {
+                    // Lógica de geração de blocos com base na seed
+                    let blockType = (random + i + j) % 2 === 0 ? '🟩' : '🟫'; // Alterna entre blocos verdes e marrons
+                    if (i === playerPosition.y && j === playerPosition.x) {
+                        row += playerSymbol; // Adiciona o jogador na posição
+                    } else {
+                        row += blockType; // Adiciona blocos
+                    }
                 }
+                map.push(row);
             }
+            return map.join('\n');
         }
-        renderizarMapa();
-    }
 
-    // Função para renderizar o mapa
-    function renderizarMapa() {
-        const mapDiv = document.getElementById('map');
-        mapDiv.innerHTML = ''; // Limpa o mapa anterior
-        mapa.forEach(row => {
-            row.forEach(block => {
-                const blockDiv = document.createElement('div');
-                blockDiv.className = `block ${block}`;
-                mapDiv.appendChild(blockDiv);
-            });
-        });
-    }
+        // Função para mostrar o status do jogador
+        function mostrarStatus() {
+            document.getElementById('status').style.display = 'block';
+        }
 
-    // Atualiza os status ao carregar a página
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('vida').innerText = vida;
-        document.getElementById('ki').innerText = ki;
-        document.getElementById('resistencia').innerText = resistencia;
-        gerarMapa();
-    });
+        // Função para esconder o status do jogador
+        function esconderStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
 
-    // Botão de status
-    document.getElementById('statusButton').onclick = () => {
-        alert(`Vida: ${vida}\nKi: ${ki}\nResistência: ${resistencia}`);
-    };
+        // Função para gerar uma seed aleatória
+        function gerarSeed() {
+            const numero1 = Math.floor(Math.random() * 10) + 1; // Gera um número entre 1 e 10
+            const letra = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Gera uma letra de A a Z
+            const numero2 = Math.floor(Math.random() * 10) - 5; // Gera um número entre -5 e 4
 
-    // Atualiza a seed quando a página é recarregada
-    window.onbeforeunload = () => {
-        seed = "456Z"; // Mude para uma nova seed se desejar
-        gerarMapa();
-    };
-</script>
+            return `${numero1}${letra}${numero2}`;
+        }
 
+        // Gera a seed e o mapa ao carregar a página
+        const seed = gerarSeed();
+        document.getElementById('mapa').innerText = gerarMapa(seed);
+    </script>
 </body>
 </html>
