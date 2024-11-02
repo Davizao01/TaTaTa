@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo com HUD e Mapa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 20px;
+        }
+        #hud {
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+        #mapa {
+            font-family: monospace;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            white-space: pre;
+            text-align: left;
+            margin: 0 auto;
+        }
+        #status {
+            display: none;
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo com HUD e Mapa</h1>
+    
+    <div id="hud">
+        <h2>HUD</h2>
+        <p>Vida: <span id="vida">❤️❤️❤️</span></p>
+        <p>Ki: <span id="ki">🔵🔵🔵</span></p>
+        <p>Resistência: <span id="resistencia">🟣🟣</span></p>
+        <button onclick="mostrarStatus()">Status</button>
+    </div>
+
+    <div id="mapa"></div>
+
+    <div id="status">
+        <h2>Status do Jogador</h2>
+        <p>Vida: 3 pontos</p>
+        <p>Ki: 3 pontos</p>
+        <p>Resistência: 2 pontos</p>
+        <button onclick="esconderStatus()">Fechar</button>
+    </div>
+
+    <script>
+        function gerarMapa(seed) {
+            // Exemplo básico de geração de mapa a partir da seed
+            const map = [];
+            const rows = 10; // Altura do mapa
+            const cols = 10; // Largura do mapa
+            const playerSymbol = '👤';
+            let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
+
+            for (let i = 0; i < rows; i++) {
+                let row = '';
+                for (let j = 0; j < cols; j++) {
+                    if (i === playerPosition.y && j === playerPosition.x) {
+                        row += playerSymbol; // Adiciona o jogador na posição
+                    } else {
+                        row += Math.random() > 0.5 ? '🟩' : '🟫'; // Blocos aleatórios
+                    }
+                }
+                map.push(row);
+            }
+            return map.join('\n');
+        }
+
+        function mostrarStatus() {
+            document.getElementById('status').style.display = 'block';
+        }
+
+        function esconderStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+
+        function gerarSeed() {
+            const numero1 = Math.floor(Math.random() * 10) + 1; // Gera um número entre 1 e 10
+            const letra = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Gera uma letra de A a Z
+            const numero2 = Math.floor(Math.random() * 10) - 5; // Gera um número entre -5 e 4
+
+            return `${numero1}${letra}${numero2}`;
+        }
+
+        // Gera a seed e o mapa ao carregar a página
+        const seed = gerarSeed();
+        document.getElementById('mapa').innerText = gerarMapa(seed);
+    </script>
+</body>
+</html>
