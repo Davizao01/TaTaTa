@@ -26,6 +26,7 @@
             white-space: pre;
             text-align: left;
             margin: 0 auto;
+            margin-bottom: 20px;
         }
         #status {
             display: none;
@@ -47,6 +48,7 @@
         <p>Vida: <span id="vida">❤️❤️❤️</span></p>
         <p>Ki: <span id="ki">🔵🔵🔵</span></p>
         <p>Resistência: <span id="resistencia">🟣🟣</span></p>
+        <p>Pontos: <span id="pontos">0</span></p>
         <button onclick="mostrarStatus()">Status</button>
     </div>
 
@@ -61,25 +63,36 @@
     </div>
 
     <script>
+        let vida = 3;
+        let ki = 3;
+        let resistencia = 2;
+        let pontos = 0;
+        const playerSymbol = '👤';
+        const enemySymbol = '👹';
+
         // Função para gerar o mapa a partir da seed
         function gerarMapa(seed) {
             const map = [];
             const rows = 10; // Altura do mapa
             const cols = 10; // Largura do mapa
-            const playerSymbol = '👤';
             let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
+            let enemyPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) }; // Posição aleatória do inimigo
 
-            // Geração de mapa usando a seed
-            let random = Math.abs(seed.charCodeAt(0) + seed.charCodeAt(1) + seed.charCodeAt(2));
+            // Geração de blocos com base na seed
+            const blockTypes = ['🟩', '🟫']; // Tipos de blocos
             for (let i = 0; i < rows; i++) {
                 let row = '';
                 for (let j = 0; j < cols; j++) {
-                    // Lógica de geração de blocos com base na seed
-                    let blockType = (random + i + j) % 2 === 0 ? '🟩' : '🟫'; // Alterna entre blocos verdes e marrons
+                    // Adiciona o jogador na posição
                     if (i === playerPosition.y && j === playerPosition.x) {
-                        row += playerSymbol; // Adiciona o jogador na posição
+                        row += playerSymbol; 
+                    // Adiciona o inimigo na posição
+                    } else if (i === enemyPosition.y && j === enemyPosition.x) {
+                        row += enemySymbol; 
                     } else {
-                        row += blockType; // Adiciona blocos
+                        // Usa a seed para determinar o tipo de bloco
+                        let blockIndex = (i + j + seed.charCodeAt(0)) % blockTypes.length;
+                        row += blockTypes[blockIndex]; // Adiciona blocos
                     }
                 }
                 map.push(row);
@@ -106,9 +119,18 @@
             return `${numero1}${letra}${numero2}`;
         }
 
+        // Função para atualizar o HUD com os pontos
+        function atualizarHUD() {
+            document.getElementById('vida').innerText = '❤️'.repeat(vida);
+            document.getElementById('ki').innerText = '🔵'.repeat(ki);
+            document.getElementById('resistencia').innerText = '🟣'.repeat(resistencia);
+            document.getElementById('pontos').innerText = pontos;
+        }
+
         // Gera a seed e o mapa ao carregar a página
         const seed = gerarSeed();
         document.getElementById('mapa').innerText = gerarMapa(seed);
+        atualizarHUD();
     </script>
 </body>
 </html>
