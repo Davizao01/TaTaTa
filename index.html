@@ -6,9 +6,10 @@
     <title>Dragon Ball Game</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #e0f7fa; }
-        #game { display: none; }
-        #menu, #login, #skillTree { display: none; }
+        #game, #arena, #store { display: none; }
+        #menu, #login, #skillTree, #battleMenu { display: none; }
         .button { margin: 5px; }
+        .item { margin: 5px; padding: 5px; border: 1px solid #000; display: inline-block; }
     </style>
 </head>
 <body>
@@ -23,6 +24,8 @@
         <button class="button" onclick="iniciarJogo()">Iniciar Aventura</button>
         <button class="button" onclick="mostrarInstrucoes()">Instruções</button>
         <button class="button" onclick="mostrarArvoreHabilidades()">Árvore de Habilidades</button>
+        <button class="button" onclick="irParaArena()">Arena PvP</button>
+        <button class="button" onclick="irParaLoja()">Loja</button>
     </div>
 
     <div id="game">
@@ -32,10 +35,28 @@
             <p id="ki">Ki: 🔵</p>
             <p id="nivel">Nível: 1</p>
             <p id="experiencia">Experiência: 0</p>
+            <p id="moedas">Moedas: 0</p>
             <p id="habilidade">Habilidade: Nenhuma</p>
         </div>
         <button class="button" onclick="transformar()">Transformar</button>
         <button class="button" onclick="usarHabilidade()">Usar Habilidade</button>
+        <button class="button" onclick="buscarBau()">Buscar Baú</button>
+    </div>
+
+    <div id="arena">
+        <h1>Arena PvP</h1>
+        <div id="battleStatus">
+            <p id="player1Status">Jogador: <span id="player1Name"></span> (Nível: <span id="player1Level"></span>) - Vida: <span id="player1Life"></span></p>
+            <p id="player2Status">Inimigo: <span id="player2Name"></span> (Nível: <span id="player2Level"></span>) - Vida: <span id="player2Life"></span></p>
+        </div>
+        <button class="button" onclick="startPvP()">Iniciar Batalha</button>
+        <button class="button" onclick="voltarMenu()">Voltar</button>
+    </div>
+
+    <div id="store">
+        <h1>Loja</h1>
+        <div id="items"></div>
+        <button class="button" onclick="voltarMenu()">Voltar</button>
     </div>
 
     <div id="skillTree">
@@ -50,20 +71,44 @@
         let playerKi = 0;
         let nivel = 1;
         let experiencia = 0;
+        let moedas = 0;
         let transformacaoAtiva = false;
         let habilidades = {
             kiBlast: false,
             kamehameha: false,
         };
 
+        // Informações da Arena PvP
+        let player1Name = '';
+        let player1Level = 1;
+        let player1Life = playerLife;
+
+        let player2Name = 'Inimigo';
+        let player2Level = Math.floor(Math.random() * 10) + 1; // Nível aleatório de 1 a 10
+        let player2Life = player2Level + 1; // Vida do inimigo baseada no nível
+
+        // Itens da loja
+        const itensLoja = [
+            { nome: 'Espada de Ferro', custo: 5 },
+            { nome: 'Técnica Ki Blast', custo: 10 },
+            { nome: 'Técnica Kamehameha', custo: 15 },
+        ];
+
         document.getElementById('login').style.display = 'block'; // Mostrar a tela de login
 
         function startGame() {
             const username = document.getElementById('username').value;
             if (username) {
-                alert(`Bem-vindo, ${username}!`);
+                player1Name = username;
+                alert(`Bem-vindo, ${player1Name}!`);
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('menu').style.display = 'block';
+                document.getElementById('player1Name').innerText = player1Name;
+                document.getElementById('player1Level').innerText = player1Level;
+                document.getElementById('player1Life').innerText = player1Life;
+                document.getElementById('player2Name').innerText = player2Name;
+                document.getElementById('player2Level').innerText = player2Level;
+                document.getElementById('player2Life').innerText = player2Life;
             } else {
                 alert('Por favor, insira um nome de usuário.');
             }
@@ -88,6 +133,7 @@
                 }
                 document.getElementById('vida').innerText = 'Vida: ❤️'.repeat(playerLife);
                 document.getElementById('experiencia').innerText = `Experiência: ${experiencia}`;
+                document.getElementById('moedas').innerText = `Moedas: ${moedas}`;
 
                 if (experiencia >= 5) {
                     nivel++;
@@ -121,6 +167,17 @@
             }
         }
 
+        function buscarBau() {
+            const loot = Math.floor(Math.random() * 10);
+            if (loot > 5) {
+                alert('Você encontrou um baú! Você ganhou 5 moedas!');
+                moedas += 5;
+                document.getElementById('moedas').innerText = `Moedas: ${moedas}`;
+            } else {
+                alert('Nada encontrado no baú.');
+            }
+        }
+
         function mostrarArvoreHabilidades() {
             document.getElementById('menu').style.display = 'none';
             document.getElementById('skillTree').style.display = 'block';
@@ -130,10 +187,9 @@
             if (experiencia >= 2) {
                 habilidades.kiBlast = true;
                 experiencia -= 2;
-                alert('Ki Blast desbloqueado!');
-                document.getElementById('experiencia').innerText = `Experiência: ${experiencia}`;
+                alert('Habilidade Ki Blast desbloqueada!');
             } else {
-                alert('Você não tem experiência suficiente para desbloquear Ki Blast!');
+                alert('Experiência insuficiente para desbloquear Ki Blast.');
             }
         }
 
@@ -141,22 +197,70 @@
             if (experiencia >= 5) {
                 habilidades.kamehameha = true;
                 experiencia -= 5;
-                alert('Kamehameha desbloqueado!');
-                document.getElementById('experiencia').innerText = `Experiência: ${experiencia}`;
+                alert('Habilidade Kamehameha desbloqueada!');
             } else {
-                alert('Você não tem experiência suficiente para desbloquear Kamehameha!');
+                alert('Experiência insuficiente para desbloquear Kamehameha.');
+            }
+        }
+
+        function irParaArena() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('arena').style.display = 'block';
+        }
+
+        function startPvP() {
+            // Simulação da batalha PvP
+            let turn = Math.random() < 0.5 ? 1 : 2; // Decide quem começa
+            alert(`${turn === 1 ? player1Name : player2Name} começa a batalha!`);
+            while (player1Life > 0 && player2Life > 0) {
+                if (turn === 1) {
+                    player2Life--;
+                    alert(`${player1Name} atacou! Vida do Inimigo: ${player2Life}`);
+                    turn = 2;
+                } else {
+                    player1Life--;
+                    alert(`${player2Name} atacou! Vida do Jogador: ${player1Life}`);
+                    turn = 1;
+                }
+            }
+            if (player1Life <= 0) {
+                alert(`${player1Name} foi derrotado!`);
+            } else {
+                alert(`${player2Name} foi derrotado! Você venceu!`);
+            }
+            voltarMenu();
+        }
+
+        function irParaLoja() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('store').style.display = 'block';
+            const itemsContainer = document.getElementById('items');
+            itemsContainer.innerHTML = '';
+            itensLoja.forEach(item => {
+                itemsContainer.innerHTML += `<div class="item">${item.nome} - ${item.custo} moedas <button onclick="comprarItem('${item.nome}', ${item.custo})">Comprar</button></div>`;
+            });
+        }
+
+        function comprarItem(nome, custo) {
+            if (moedas >= custo) {
+                moedas -= custo;
+                alert(`Você comprou ${nome}!`);
+                document.getElementById('moedas').innerText = `Moedas: ${moedas}`;
+            } else {
+                alert('Moedas insuficientes!');
             }
         }
 
         function voltarMenu() {
+            document.getElementById('arena').style.display = 'none';
+            document.getElementById('store').style.display = 'none';
             document.getElementById('skillTree').style.display = 'none';
             document.getElementById('menu').style.display = 'block';
         }
 
         function mostrarInstrucoes() {
-            alert('Use as setas para mover, pressione "Transformar" para se transformar e "Usar Habilidade" para atacar.');
+            alert('Instruções:\n1. Jogue para ganhar experiência.\n2. Desbloqueie habilidades na árvore de habilidades.\n3. Enfrente inimigos na arena PvP.\n4. Compre itens na loja usando moedas.');
         }
-
     </script>
 </body>
 </html>
