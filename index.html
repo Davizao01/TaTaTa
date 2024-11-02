@@ -9,7 +9,6 @@
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
             text-align: center;
-            padding: 20px;
         }
         #hud {
             margin-bottom: 20px;
@@ -46,32 +45,58 @@
         .chest {
             color: green; /* Cor para baú */
         }
+        .narrativa {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        #login, #menu, #game {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <h1>Dragon Battle: Legends Awaken</h1>
-    
-    <div id="hud">
-        <h2>HUD</h2>
-        <p>Vida: <span id="vida">❤️❤️❤️</span></p>
-        <p>Ki: <span id="ki">🔵🔵🔵</span></p>
-        <p>Arma: <span id="arma">Nenhuma</span></p>
-        <p>Experiência: <span id="experiencia">0</span></p>
-        <button onclick="mostrarStatus()">Status</button>
+    <div id="login">
+        <h1>Tela de Login</h1>
+        <input type="text" id="username" placeholder="Nome de Usuário">
+        <button onclick="login()">Entrar</button>
+        <p id="loginError" style="color:red;"></p>
     </div>
 
-    <div id="mapa"></div>
+    <div id="menu">
+        <h1>Menu Principal</h1>
+        <button onclick="iniciarJogo()">Iniciar Jogo</button>
+        <button onclick="mostrarInstrucoes()">Instruções</button>
+    </div>
 
-    <div id="status">
-        <h2>Status do Jogador</h2>
-        <p>Vida: <span id="vidaTotal">3 pontos</span></p>
-        <p>Ki: <span id="kiTotal">3 pontos</span></p>
-        <p>Transformação: <span id="transformacao">Nenhuma</span></p>
-        <p>Habilidades: <span id="habilidades">Nenhuma</span></p>
-        <button onclick="esconderStatus()">Fechar</button>
+    <div id="game">
+        <h1>Dragon Battle: Legends Awaken</h1>
+        <div id="hud">
+            <h2>HUD</h2>
+            <p>Vida: <span id="vida">❤️❤️❤️</span></p>
+            <p>Ki: <span id="ki">🔵🔵🔵</span></p>
+            <p>Arma: <span id="arma">Nenhuma</span></p>
+            <p>Experiência: <span id="experiencia">0</span></p>
+            <button onclick="mostrarStatus()">Status</button>
+        </div>
+
+        <div id="mapa"></div>
+
+        <div id="status">
+            <h2>Status do Jogador</h2>
+            <p>Vida: <span id="vidaTotal">3 pontos</span></p>
+            <p>Ki: <span id="kiTotal">3 pontos</span></p>
+            <p>Nível: <span id="nivel">1</span></p>
+            <p>Transformação: <span id="transformacao">Nenhuma</span></p>
+            <p>Habilidades: <span id="habilidades">Nenhuma</span></p>
+            <button onclick="esconderStatus()">Fechar</button>
+        </div>
+
+        <div id="narrativa" class="narrativa"></div>
     </div>
 
     <script>
+        let currentPlayerName = "";
         const mapRows = 10;
         const mapCols = 10;
         const playerSymbol = '👤';
@@ -83,9 +108,34 @@
         let playerLife = 3;
         let playerKi = 3;
         let experiencia = 0;
+        let nivel = 1;
         let hasSword = false; // Status da arma
         let transformacaoAtiva = false; // Status da transformação
         let habilidades = [];
+        const maxNivel = 5; // Nível máximo
+
+        // Função de Login
+        function login() {
+            const usernameInput = document.getElementById('username').value;
+            if (usernameInput) {
+                currentPlayerName = usernameInput;
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('menu').style.display = 'block';
+            } else {
+                document.getElementById('loginError').innerText = "Por favor, insira um nome de usuário.";
+            }
+        }
+
+        function iniciarJogo() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            atualizarMapa();
+            document.getElementById('narrativa').innerText = 'Você é um guerreiro em busca de poder e aventura. Explore o mapa e enfrente inimigos!';
+        }
+
+        function mostrarInstrucoes() {
+            alert("Use as teclas de seta para se mover. Z para coletar a espada, T para transformar.");
+        }
 
         function atualizarMapa() {
             const mapa = [];
@@ -110,6 +160,7 @@
         function mostrarStatus() {
             document.getElementById('vidaTotal').innerText = playerLife + ' pontos';
             document.getElementById('kiTotal').innerText = playerKi + ' pontos';
+            document.getElementById('nivel').innerText = nivel;
             document.getElementById('transformacao').innerText = transformacaoAtiva ? 'Super Saiyajin' : 'Nenhuma';
             document.getElementById('habilidades').innerText = habilidades.length > 0 ? habilidades.join(', ') : 'Nenhuma';
             document.getElementById('status').style.display = 'block';
@@ -153,53 +204,52 @@
         function resetarBaú() {
             chestPosition.x = Math.floor(Math.random() * mapCols);
             chestPosition.y = Math.floor(Math.random() * mapRows);
-            while (chestPosition.x === playerPosition.x && chestPosition.y === playerPosition.y) {
+            while ((chestPosition.x === playerPosition.x && chestPosition.y === playerPosition.y) ||
+                   (chestPosition.x === enemyPosition.x && chestPosition.y === enemyPosition.y)) {
                 chestPosition.x = Math.floor(Math.random() * mapCols);
                 chestPosition.y = Math.floor(Math.random() * mapRows);
             }
         }
 
         function iniciarCombate() {
-            const ataque = hasSword ? 2 : 1; // Aumenta dano se tiver espada
-            const enemyLife = 2; // Vida do inimigo
-            let enemyAtualLife = enemyLife;
-            
-            while (playerLife > 0 && enemyAtualLife > 0) {
-                enemyAtualLife -= ataque;
-                alert(`Você atacou o inimigo! Vida do inimigo: ${enemyAtualLife}`);
-                if (enemyAtualLife <= 0) {
-                    alert('Inimigo derrotado!');
-                    experiencia += 2; // Ganho de experiência ao derrotar
+            while (playerLife > 0) {
+                if (hasSword) {
+                    alert('Você atacou o inimigo e o derrotou!');
+                    experiencia += 2;
                     document.getElementById('experiencia').innerText = experiencia;
-                    playerKi += 1; // Ganho de Ki ao derrotar
-                    document.getElementById('ki').innerText = '🔵🔵🔵🔵';
-                    return;
-                }
-                playerLife -= 1; // O inimigo contra-ataca
-                document.getElementById('vida').innerText = '❤️❤️';
-                if (playerLife <= 0) {
-                    alert('Você foi derrotado!');
-                    return;
+                    ganharNivel();
+                    break;
+                } else {
+                    alert('Você não tem uma arma! O inimigo ataca.');
+                    playerLife -= 1; // O inimigo ataca
+                    document.getElementById('vida').innerText = '❤️❤️❤️'.slice(0, playerLife);
+                    if (playerLife <= 0) {
+                        alert('Você foi derrotado! Jogo encerrado.');
+                        break;
+                    }
                 }
             }
         }
 
-        function coletarArma() {
-            hasSword = true;
-            document.getElementById('arma').innerText = 'Espada';
-            alert('Você coletou uma espada!');
+        function ganharNivel() {
+            if (experiencia >= 5 && nivel < maxNivel) {
+                nivel++;
+                alert('Você subiu de nível! Nível atual: ' + nivel);
+            }
         }
 
         function transformar() {
-            if (!transformacaoAtiva) {
+            if (nivel >= 3) {
                 transformacaoAtiva = true;
+                playerKi += 1; // Ganho de Ki ao se transformar
                 alert('Você se transformou em Super Saiyajin!');
+                document.getElementById('transformacao').innerText = 'Super Saiyajin';
             } else {
-                alert('Você já está transformado!');
+                alert('Você precisa ser pelo menos nível 3 para se transformar!');
             }
         }
 
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowUp') moverPlayer('up');
             if (event.key === 'ArrowDown') moverPlayer('down');
             if (event.key === 'ArrowLeft') moverPlayer('left');
@@ -208,7 +258,8 @@
             if (event.key === 't') transformar(); // Tecla 'T' para transformação
         });
 
-        atualizarMapa();
+        document.getElementById('login').style.display = 'block'; // Mostrar a tela de login
+
     </script>
 </body>
 </html>
