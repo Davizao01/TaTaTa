@@ -31,12 +31,6 @@
             border: 1px solid #ccc;
             width: 200px;
         }
-        #player {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background-color: #FFD700; /* Cor do jogador */
-        }
     </style>
 </head>
 <body>
@@ -50,24 +44,22 @@
 </div>
 
 <div id="map"></div>
-<div id="player"></div>
 
 <script>
     let seed = "456Z";
-    const rows = 10; // número de linhas do mapa
-    const cols = 10; // número de colunas do mapa
     let mapa = [];
-    let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
     const vida = 3;
     const ki = 0;
     const resistencia = 0;
 
     // Função para gerar o mapa
     function gerarMapa() {
+        const rows = 10; // número de linhas
+        const cols = 10; // número de colunas
         for (let i = 0; i < rows; i++) {
             mapa[i] = [];
             for (let j = 0; j < cols; j++) {
-                // Lógica para gerar os blocos com base na seed
+                // Lógica para gerar os blocos com base na seed (exemplo simples)
                 if (i < 5) {
                     mapa[i][j] = 'green'; // Blocos verdes
                 } else {
@@ -76,7 +68,6 @@
             }
         }
         renderizarMapa();
-        posicionarJogador();
     }
 
     // Função para renderizar o mapa
@@ -90,13 +81,6 @@
                 mapDiv.appendChild(blockDiv);
             });
         });
-    }
-
-    // Função para posicionar o jogador no mapa
-    function posicionarJogador() {
-        const playerDiv = document.getElementById('player');
-        playerDiv.style.left = (playerPosition.x * 40) + 'px'; // A posição do jogador no eixo X
-        playerDiv.style.bottom = (playerPosition.y * 40) + 'px'; // A posição do jogador no eixo Y
     }
 
     // Atualiza os status ao carregar a página
