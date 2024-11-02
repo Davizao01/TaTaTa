@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo com HUD e Mapa</title>
+    <title>Dragon Battle: Legends Awaken</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,7 +26,6 @@
             white-space: pre;
             text-align: left;
             margin: 0 auto;
-            margin-bottom: 20px;
         }
         #status {
             display: none;
@@ -38,17 +37,26 @@
         button {
             margin-top: 10px;
         }
+        .player {
+            color: blue; /* Cor para o jogador */
+        }
+        .enemy {
+            color: red; /* Cor para o inimigo */
+        }
+        .chest {
+            color: green; /* Cor para baú */
+        }
     </style>
 </head>
 <body>
-    <h1>Jogo com HUD e Mapa</h1>
+    <h1>Dragon Battle: Legends Awaken</h1>
     
     <div id="hud">
         <h2>HUD</h2>
         <p>Vida: <span id="vida">❤️❤️❤️</span></p>
         <p>Ki: <span id="ki">🔵🔵🔵</span></p>
-        <p>Resistência: <span id="resistencia">🟣🟣</span></p>
-        <p>Pontos: <span id="pontos">0</span></p>
+        <p>Arma: <span id="arma">Nenhuma</span></p>
+        <p>Experiência: <span id="experiencia">0</span></p>
         <button onclick="mostrarStatus()">Status</button>
     </div>
 
@@ -56,92 +64,151 @@
 
     <div id="status">
         <h2>Status do Jogador</h2>
-        <p>Vida: 3 pontos</p>
-        <p>Ki: 3 pontos</p>
-        <p>Resistência: 2 pontos</p>
+        <p>Vida: <span id="vidaTotal">3 pontos</span></p>
+        <p>Ki: <span id="kiTotal">3 pontos</span></p>
+        <p>Transformação: <span id="transformacao">Nenhuma</span></p>
+        <p>Habilidades: <span id="habilidades">Nenhuma</span></p>
         <button onclick="esconderStatus()">Fechar</button>
     </div>
 
     <script>
-        let vida = 3;
-        let ki = 3;
-        let resistencia = 2;
-        let pontos = 0;
+        const mapRows = 10;
+        const mapCols = 10;
         const playerSymbol = '👤';
         const enemySymbol = '👹';
+        const chestSymbol = '🪙';
+        let playerPosition = { x: 1, y: 1 };
+        let enemyPosition = { x: 8, y: 8 };
+        let chestPosition = { x: 5, y: 5 }; // Posição do baú
+        let playerLife = 3;
+        let playerKi = 3;
+        let experiencia = 0;
+        let hasSword = false; // Status da arma
+        let transformacaoAtiva = false; // Status da transformação
+        let habilidades = [];
 
-        // Função para gerar o mapa a partir da seed
-        function gerarMapa(seed) {
-            const rows = 10; // Altura do mapa
-            const cols = 10; // Largura do mapa
-            let mapa = '';
-
-            // Extrair informações da seed
-            const numBlocksAbove = parseInt(seed.charAt(0)); // Número de blocos verdes (🟩)
-            const layerCount = seed.charAt(1); // Camadas de blocos marrons (🟫)
-            const numBlocksBelow = parseInt(seed.charAt(2)); // Número de blocos acima ou abaixo
-
-            // Adiciona jogador e inimigo na primeira linha
-            const playerPosition = Math.floor(cols / 4); // Posição do jogador
-            const enemyPosition = Math.floor(cols * 3 / 4); // Posição do inimigo
-
-            // Linha do jogador e inimigo
-            let linha1 = ' '.repeat(playerPosition) + playerSymbol + ' '.repeat(enemyPosition - playerPosition - 1) + enemySymbol;
-            mapa += linha1 + '\n';
-
-            // Linha dos blocos
-            let linha2 = '';
-            for (let j = 0; j < cols; j++) {
-                if (j < numBlocksAbove) {
-                    linha2 += '🟩'; // Superfície
-                } else if (j >= numBlocksAbove && j < numBlocksAbove + layerCount.charCodeAt(0) - 64) {
-                    linha2 += '🟫'; // Camadas abaixo da superfície
-                } else {
-                    linha2 += ' '; // Espaço vazio
+        function atualizarMapa() {
+            const mapa = [];
+            for (let i = 0; i < mapRows; i++) {
+                let linha = '';
+                for (let j = 0; j < mapCols; j++) {
+                    if (i === playerPosition.y && j === playerPosition.x) {
+                        linha += `<span class="player">${playerSymbol}</span>`;
+                    } else if (i === enemyPosition.y && j === enemyPosition.x) {
+                        linha += `<span class="enemy">${enemySymbol}</span>`;
+                    } else if (i === chestPosition.y && j === chestPosition.x) {
+                        linha += `<span class="chest">${chestSymbol}</span>`;
+                    } else {
+                        linha += '🟩'; // Blocos do mapa
+                    }
                 }
+                mapa.push(linha);
             }
-            mapa += linha2 + '\n';
-
-            // Adiciona blocos abaixo da superfície
-            const extraRows = Math.abs(numBlocksBelow);
-            for (let i = 0; i < extraRows; i++) {
-                mapa += ' '.repeat(cols) + '\n'; // Linhas vazias
-            }
-
-            return mapa;
+            document.getElementById('mapa').innerHTML = mapa.join('<br>');
         }
 
-        // Função para mostrar o status do jogador
         function mostrarStatus() {
+            document.getElementById('vidaTotal').innerText = playerLife + ' pontos';
+            document.getElementById('kiTotal').innerText = playerKi + ' pontos';
+            document.getElementById('transformacao').innerText = transformacaoAtiva ? 'Super Saiyajin' : 'Nenhuma';
+            document.getElementById('habilidades').innerText = habilidades.length > 0 ? habilidades.join(', ') : 'Nenhuma';
             document.getElementById('status').style.display = 'block';
         }
 
-        // Função para esconder o status do jogador
         function esconderStatus() {
             document.getElementById('status').style.display = 'none';
         }
 
-        // Gera uma seed aleatória no formato 5C-5
-        function gerarSeed() {
-            const numBlocksAbove = Math.floor(Math.random() * 10) + 1; // Número entre 1 e 10
-            const layerCount = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Letra de A a Z
-            const numBlocksBelow = Math.floor(Math.random() * 10) - 5; // Número entre -5 e 4
+        function moverPlayer(direcao) {
+            if (direcao === 'up' && playerPosition.y > 0) playerPosition.y--;
+            if (direcao === 'down' && playerPosition.y < mapRows - 1) playerPosition.y++;
+            if (direcao === 'left' && playerPosition.x > 0) playerPosition.x--;
+            if (direcao === 'right' && playerPosition.x < mapCols - 1) playerPosition.x++;
 
-            return `${numBlocksAbove}${layerCount}${numBlocksBelow}`;
+            atualizarMapa();
+            checarCombate();
+            checarBaú();
         }
 
-        // Função para atualizar o HUD com os pontos
-        function atualizarHUD() {
-            document.getElementById('vida').innerText = '❤️'.repeat(vida);
-            document.getElementById('ki').innerText = '🔵'.repeat(ki);
-            document.getElementById('resistencia').innerText = '🟣'.repeat(resistencia);
-            document.getElementById('pontos').innerText = pontos;
+        function checarCombate() {
+            if (playerPosition.x === enemyPosition.x && playerPosition.y === enemyPosition.y) {
+                alert('Você encontrou o inimigo! Preparar para lutar!');
+                iniciarCombate();
+            }
         }
 
-        // Gera a seed e o mapa ao carregar a página
-        const seed = gerarSeed();
-        document.getElementById('mapa').innerText = gerarMapa(seed);
-        atualizarHUD();
+        function checarBaú() {
+            if (playerPosition.x === chestPosition.x && playerPosition.y === chestPosition.y) {
+                alert('Você encontrou um baú! Você coletou uma espada e 1 ponto de vida!');
+                hasSword = true;
+                document.getElementById('arma').innerText = 'Espada';
+                playerLife += 1;
+                document.getElementById('vida').innerText = '❤️❤️❤️❤️';
+                experiencia += 1;
+                document.getElementById('experiencia').innerText = experiencia;
+                resetarBaú(); // Reposicionar o baú
+            }
+        }
+
+        function resetarBaú() {
+            chestPosition.x = Math.floor(Math.random() * mapCols);
+            chestPosition.y = Math.floor(Math.random() * mapRows);
+            while (chestPosition.x === playerPosition.x && chestPosition.y === playerPosition.y) {
+                chestPosition.x = Math.floor(Math.random() * mapCols);
+                chestPosition.y = Math.floor(Math.random() * mapRows);
+            }
+        }
+
+        function iniciarCombate() {
+            const ataque = hasSword ? 2 : 1; // Aumenta dano se tiver espada
+            const enemyLife = 2; // Vida do inimigo
+            let enemyAtualLife = enemyLife;
+            
+            while (playerLife > 0 && enemyAtualLife > 0) {
+                enemyAtualLife -= ataque;
+                alert(`Você atacou o inimigo! Vida do inimigo: ${enemyAtualLife}`);
+                if (enemyAtualLife <= 0) {
+                    alert('Inimigo derrotado!');
+                    experiencia += 2; // Ganho de experiência ao derrotar
+                    document.getElementById('experiencia').innerText = experiencia;
+                    playerKi += 1; // Ganho de Ki ao derrotar
+                    document.getElementById('ki').innerText = '🔵🔵🔵🔵';
+                    return;
+                }
+                playerLife -= 1; // O inimigo contra-ataca
+                document.getElementById('vida').innerText = '❤️❤️';
+                if (playerLife <= 0) {
+                    alert('Você foi derrotado!');
+                    return;
+                }
+            }
+        }
+
+        function coletarArma() {
+            hasSword = true;
+            document.getElementById('arma').innerText = 'Espada';
+            alert('Você coletou uma espada!');
+        }
+
+        function transformar() {
+            if (!transformacaoAtiva) {
+                transformacaoAtiva = true;
+                alert('Você se transformou em Super Saiyajin!');
+            } else {
+                alert('Você já está transformado!');
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowUp') moverPlayer('up');
+            if (event.key === 'ArrowDown') moverPlayer('down');
+            if (event.key === 'ArrowLeft') moverPlayer('left');
+            if (event.key === 'ArrowRight') moverPlayer('right');
+            if (event.key === 'z') coletarArma(); // Tecla 'Z' para coletar a arma
+            if (event.key === 't') transformar(); // Tecla 'T' para transformação
+        });
+
+        atualizarMapa();
     </script>
 </body>
 </html>
