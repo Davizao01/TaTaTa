@@ -40,9 +40,23 @@
             padding: 10px;
             font-size: 16px;
         }
-        #status {
+        #status, #arenaStatus {
             margin: 20px;
             text-align: left;
+        }
+        #arenaMap {
+            width: 600px; 
+            height: 400px; 
+            border: 1px solid #fff; 
+            margin: auto; 
+            background-color: #444;
+            position: relative;
+        }
+        .arenaPlayer {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: red; /* Cor do jogador na arena */
         }
     </style>
 </head>
@@ -60,7 +74,9 @@
     <div id="arena">
         <button id="backArenaButton">Voltar ao Menu</button>
         <h2>Arena PvP</h2>
-        <div id="arenaMap" style="width: 600px; height: 400px; border: 1px solid #fff; margin: auto; background-color: #444;"></div>
+        <div id="arenaStatus"></div>
+        <div id="arenaMap"></div>
+        <button id="attackButton">Atacar</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -71,8 +87,10 @@
         const arenaButton = document.getElementById('arenaButton');
         const backButton = document.getElementById('backButton');
         const backArenaButton = document.getElementById('backArenaButton');
+        const attackButton = document.getElementById('attackButton');
         let players = {};
         let items = {};
+        let arenaPlayers = {};
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('menu').style.display = 'block';
@@ -86,7 +104,7 @@
             arenaButton.addEventListener('click', () => {
                 document.getElementById('menu').style.display = 'none';
                 document.getElementById('arena').style.display = 'block';
-                // Aqui você pode adicionar lógica para a arena PvP
+                socket.emit('joinArena');
             });
 
             backButton.addEventListener('click', () => {
@@ -97,6 +115,13 @@
             backArenaButton.addEventListener('click', () => {
                 document.getElementById('arena').style.display = 'none';
                 document.getElementById('menu').style.display = 'block';
+            });
+
+            attackButton.addEventListener('click', () => {
+                const targetId = prompt("Digite o ID do jogador a atacar:");
+                if (targetId) {
+                    socket.emit('attack', targetId);
+                }
             });
         });
 
@@ -109,6 +134,12 @@
         socket.on('updateItems', (updatedItems) => {
             items = updatedItems;
             atualizarLoot();
+        });
+
+        socket.on('updateArena', (updatedArenaPlayers) => {
+            arenaPlayers = updatedArenaPlayers;
+            atualizarArena();
+            atualizarArenaStatus();
         });
 
         function atualizarMapa() {
@@ -131,45 +162,41 @@
                 itemDiv.classList.add('item');
                 itemDiv.style.left = item.x * 30 + 'px'; // Ajuste a escala
                 itemDiv.style.top = item.y * 30 + 'px'; // Ajuste a escala
-                itemDiv.setAttribute('id', item.id);
                 lootDiv.appendChild(itemDiv);
-                lootDiv.addEventListener('click', () => {
-                    socket.emit('collectItem', item.id);
-                });
             }
             mapDiv.appendChild(lootDiv);
         }
 
-        function atualizarStatus() {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML = '';
-            for (const id in players) {
-                const player = players[id];
-                statusDiv.innerHTML += `${player.name} - Saúde: ${player.health} - Nível: ${player.level} <br>`;
+        function atualizarArena() {
+            const arenaMapDiv = document.getElementById('arenaMap');
+            arenaMapDiv.innerHTML = ''; // Limpa a arena
+            for (const id in arenaPlayers) {
+                const player = arenaPlayers[id];
+                const playerDiv = document.createElement('div');
+                playerDiv.classList.add('arenaPlayer');
+                playerDiv.style.left = Math.random() * 580 + 'px'; // Posição aleatória na arena
+                playerDiv.style.top = Math.random() * 380 + 'px'; // Posição aleatória na arena
+                arenaMapDiv.appendChild(playerDiv);
             }
         }
 
-        document.addEventListener('keydown', (event) => {
-            let dx = 0;
-            let dy = 0;
-            switch (event.key) {
-                case 'ArrowUp':
-                    dy = -1;
-                    break;
-                case 'ArrowDown':
-                    dy = 1;
-                    break;
-                case 'ArrowLeft':
-                    dx = -1;
-                    break;
-                case 'ArrowRight':
-                    dx = 1;
-                    break;
+        function atualizarStatus() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<h2>Status</h2>';
+            for (const id in players) {
+                const player = players[id];
+                statusDiv.innerHTML += `<p>${player.name}: Vida: ${player.health}, Nível: ${player.level}</p>`;
             }
-            if (dx !== 0 || dy !== 0) {
-                socket.emit('move', { dx, dy });
+        }
+
+        function atualizarArenaStatus() {
+            const arenaStatusDiv = document.getElementById('arenaStatus');
+            arenaStatusDiv.innerHTML = '<h2>Status da Arena</h2>';
+            for (const id in arenaPlayers) {
+                const player = arenaPlayers[id];
+                arenaStatusDiv.innerHTML += `<p>Jogador ${player.id}: Vida: ${player.health}, Nível: ${player.level}</p>`;
             }
-        });
+        }
     </script>
 </body>
 </html>
