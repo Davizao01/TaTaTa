@@ -3,156 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo de Aventura</title>
+    <title>Jogo de Exemplo</title>
     <style>
         body {
-            margin: 0;
-            overflow: hidden;
             font-family: Arial, sans-serif;
-            background-color: #87CEEB; /* Cor do céu */
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        #gameCanvas {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
+        #map {
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-gap: 1px;
         }
-        .ground {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 20px;
-            background-color: #228B22; /* Cor da grama */
+        .block {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
         }
-        .player, .enemy {
+        .green { background-color: #4CAF50; }
+        .brown { background-color: #8B4513; }
+        #hud {
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 200px;
+        }
+        #player {
             position: absolute;
             width: 40px;
             height: 40px;
             background-color: #FFD700; /* Cor do jogador */
         }
-        .enemy {
-            background-color: #FF0000; /* Cor dos zumbis */
-        }
-        #hud {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-        }
     </style>
 </head>
 <body>
-    <div id="gameCanvas">
-        <div id="player" class="player"></div>
-        <div class="ground"></div>
-    </div>
-    <div id="hud">
-        <p>Nível: <span id="level">0</span></p>
-        <p>XP: <span id="xp">0</span></p>
-        <button id="statusButton">Status</button>
-    </div>
 
-    <script>
-        // Variáveis do jogo
-        const player = document.getElementById('player');
-        const gameCanvas = document.getElementById('gameCanvas');
-        const levelDisplay = document.getElementById('level');
-        const xpDisplay = document.getElementById('xp');
-        const statusButton = document.getElementById('statusButton');
+<div id="hud">
+    <h3>HUD</h3>
+    <p>Vida: <span id="vida">3</span></p>
+    <p>Ki: <span id="ki">0</span></p>
+    <p>Resistência: <span id="resistencia">0</span></p>
+    <button id="statusButton">Status</button>
+</div>
 
-        let playerLevel = 0;
-        let playerXP = 0;
-        let gravity = 1;
-        let isJumping = false;
-        let jumpStrength = 20;
-        let jumpCount = 0;
+<div id="map"></div>
+<div id="player"></div>
 
-        // Função para atualizar HUD
-        function updateHUD() {
-            levelDisplay.innerText = playerLevel;
-            xpDisplay.innerText = playerXP;
-        }
+<script>
+    let seed = "456Z";
+    const rows = 10; // número de linhas do mapa
+    const cols = 10; // número de colunas do mapa
+    let mapa = [];
+    let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
+    const vida = 3;
+    const ki = 0;
+    const resistencia = 0;
 
-        // Função de gravidade e pulo
-        function applyGravity() {
-            if (isJumping) {
-                const playerBottom = parseInt(window.getComputedStyle(player).bottom);
-                if (playerBottom > 20) {
-                    player.style.bottom = (playerBottom - gravity) + 'px';
+    // Função para gerar o mapa
+    function gerarMapa() {
+        for (let i = 0; i < rows; i++) {
+            mapa[i] = [];
+            for (let j = 0; j < cols; j++) {
+                // Lógica para gerar os blocos com base na seed
+                if (i < 5) {
+                    mapa[i][j] = 'green'; // Blocos verdes
                 } else {
-                    isJumping = false; // O jogador volta ao chão
-                    player.style.bottom = '20px';
+                    mapa[i][j] = 'brown'; // Blocos marrons
                 }
             }
         }
+        renderizarMapa();
+        posicionarJogador();
+    }
 
-        // Função para pular
-        function jump() {
-            if (!isJumping && jumpCount < 2) { // Permite 2 pulos
-                isJumping = true;
-                jumpCount++;
-                const jumpInterval = setInterval(() => {
-                    const playerBottom = parseInt(window.getComputedStyle(player).bottom);
-                    if (playerBottom < jumpStrength + 20) {
-                        player.style.bottom = (playerBottom + jumpStrength) + 'px';
-                    } else {
-                        clearInterval(jumpInterval);
-                    }
-                }, 20);
-            }
-        }
-
-        // Função para gerar inimigos
-        function spawnEnemy() {
-            const enemy = document.createElement('div');
-            enemy.className = 'enemy';
-            enemy.style.left = Math.random() * (window.innerWidth - 40) + 'px';
-            enemy.style.bottom = '20px'; // Altura inicial dos inimigos
-            gameCanvas.appendChild(enemy);
-
-            // Lógica de movimento do inimigo
-            const enemyInterval = setInterval(() => {
-                const enemyBottom = parseInt(window.getComputedStyle(enemy).bottom);
-                if (enemyBottom > 0) {
-                    enemy.style.bottom = (enemyBottom - gravity) + 'px';
-                } else {
-                    clearInterval(enemyInterval);
-                    enemy.remove(); // Remove o inimigo se atingir o chão
-                }
-            }, 100);
-        }
-
-        // Gerar XP aleatória quando um inimigo é derrotado
-        function enemyDefeated() {
-            const xpGained = Math.floor(Math.random() * 20) + 1; // XP aleatório entre 1 e 20
-            playerXP += xpGained;
-            if (playerXP >= 100) { // Aumenta o nível a cada 100 XP
-                playerLevel++;
-                playerXP = 0; // Resetando XP após subir de nível
-            }
-            updateHUD();
-        }
-
-        // Controle de eventos
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                jump(); // Pula ao pressionar a barra de espaço
-            }
+    // Função para renderizar o mapa
+    function renderizarMapa() {
+        const mapDiv = document.getElementById('map');
+        mapDiv.innerHTML = ''; // Limpa o mapa anterior
+        mapa.forEach(row => {
+            row.forEach(block => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = `block ${block}`;
+                mapDiv.appendChild(blockDiv);
+            });
         });
+    }
 
-        // Spawn de inimigos a cada 3 segundos
-        setInterval(spawnEnemy, 3000);
+    // Função para posicionar o jogador no mapa
+    function posicionarJogador() {
+        const playerDiv = document.getElementById('player');
+        playerDiv.style.left = (playerPosition.x * 40) + 'px'; // A posição do jogador no eixo X
+        playerDiv.style.bottom = (playerPosition.y * 40) + 'px'; // A posição do jogador no eixo Y
+    }
 
-        // Atualização da gravidade
-        setInterval(applyGravity, 20);
+    // Atualiza os status ao carregar a página
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('vida').innerText = vida;
+        document.getElementById('ki').innerText = ki;
+        document.getElementById('resistencia').innerText = resistencia;
+        gerarMapa();
+    });
 
-        // Atualização do HUD
-        updateHUD();
+    // Botão de status
+    document.getElementById('statusButton').onclick = () => {
+        alert(`Vida: ${vida}\nKi: ${ki}\nResistência: ${resistencia}`);
+    };
 
-        // Exibir status
-        statusButton.addEventListener('click', () => {
-            alert(`Nível: ${playerLevel}\nXP: ${playerXP}`);
-        });
-    </script>
+    // Atualiza a seed quando a página é recarregada
+    window.onbeforeunload = () => {
+        seed = "456Z"; // Mude para uma nova seed se desejar
+        gerarMapa();
+    };
+</script>
+
 </body>
 </html>
