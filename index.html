@@ -72,32 +72,43 @@
 
         // Função para gerar o mapa a partir da seed
         function gerarMapa(seed) {
-            const map = [];
             const rows = 10; // Altura do mapa
             const cols = 10; // Largura do mapa
-            let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
-            let enemyPosition = { x: Math.floor(Math.random() * cols), y: Math.floor(Math.random() * rows) }; // Posição aleatória do inimigo
+            let mapa = '';
 
-            // Geração de blocos com base na seed
-            const blockTypes = ['🟩', '🟫']; // Tipos de blocos
-            for (let i = 0; i < rows; i++) {
-                let row = '';
-                for (let j = 0; j < cols; j++) {
-                    // Adiciona o jogador na posição
-                    if (i === playerPosition.y && j === playerPosition.x) {
-                        row += playerSymbol; 
-                    // Adiciona o inimigo na posição
-                    } else if (i === enemyPosition.y && j === enemyPosition.x) {
-                        row += enemySymbol; 
-                    } else {
-                        // Usa a seed para determinar o tipo de bloco
-                        let blockIndex = (i + j + seed.charCodeAt(0)) % blockTypes.length;
-                        row += blockTypes[blockIndex]; // Adiciona blocos
-                    }
+            // Extrair informações da seed
+            const numBlocksAbove = parseInt(seed.charAt(0)); // Número de blocos verdes (🟩)
+            const layerCount = seed.charAt(1); // Camadas de blocos marrons (🟫)
+            const numBlocksBelow = parseInt(seed.charAt(2)); // Número de blocos acima ou abaixo
+
+            // Adiciona jogador e inimigo na primeira linha
+            const playerPosition = Math.floor(cols / 4); // Posição do jogador
+            const enemyPosition = Math.floor(cols * 3 / 4); // Posição do inimigo
+
+            // Linha do jogador e inimigo
+            let linha1 = ' '.repeat(playerPosition) + playerSymbol + ' '.repeat(enemyPosition - playerPosition - 1) + enemySymbol;
+            mapa += linha1 + '\n';
+
+            // Linha dos blocos
+            let linha2 = '';
+            for (let j = 0; j < cols; j++) {
+                if (j < numBlocksAbove) {
+                    linha2 += '🟩'; // Superfície
+                } else if (j >= numBlocksAbove && j < numBlocksAbove + layerCount.charCodeAt(0) - 64) {
+                    linha2 += '🟫'; // Camadas abaixo da superfície
+                } else {
+                    linha2 += ' '; // Espaço vazio
                 }
-                map.push(row);
             }
-            return map.join('\n');
+            mapa += linha2 + '\n';
+
+            // Adiciona blocos abaixo da superfície
+            const extraRows = Math.abs(numBlocksBelow);
+            for (let i = 0; i < extraRows; i++) {
+                mapa += ' '.repeat(cols) + '\n'; // Linhas vazias
+            }
+
+            return mapa;
         }
 
         // Função para mostrar o status do jogador
@@ -110,13 +121,13 @@
             document.getElementById('status').style.display = 'none';
         }
 
-        // Função para gerar uma seed aleatória
+        // Gera uma seed aleatória no formato 5C-5
         function gerarSeed() {
-            const numero1 = Math.floor(Math.random() * 10) + 1; // Gera um número entre 1 e 10
-            const letra = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Gera uma letra de A a Z
-            const numero2 = Math.floor(Math.random() * 10) - 5; // Gera um número entre -5 e 4
+            const numBlocksAbove = Math.floor(Math.random() * 10) + 1; // Número entre 1 e 10
+            const layerCount = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Letra de A a Z
+            const numBlocksBelow = Math.floor(Math.random() * 10) - 5; // Número entre -5 e 4
 
-            return `${numero1}${letra}${numero2}`;
+            return `${numBlocksAbove}${layerCount}${numBlocksBelow}`;
         }
 
         // Função para atualizar o HUD com os pontos
