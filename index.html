@@ -3,238 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dragon Battle: Legends Awaken</title>
+    <title>Dragon Ball Game</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            text-align: center;
-        }
-        #hud {
-            margin-bottom: 20px;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ccc;
-            display: inline-block;
-        }
-        #mapa {
-            font-family: monospace;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ccc;
-            white-space: pre;
-            text-align: left;
-            margin: 0 auto;
-        }
-        #status {
-            display: none;
-            margin-top: 20px;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        button {
-            margin-top: 10px;
-        }
-        .player {
-            color: blue; /* Cor para o jogador */
-        }
-        .enemy {
-            color: red; /* Cor para o inimigo */
-        }
-        .chest {
-            color: green; /* Cor para baú */
-        }
-        .narrativa {
-            margin-top: 20px;
-            font-size: 1.2em;
-            color: #333;
-        }
-        #login, #menu, #game {
-            display: none;
-        }
+        body { font-family: Arial, sans-serif; background-color: #e0f7fa; }
+        #game { display: none; }
+        #menu, #login, #skillTree { display: none; }
+        .button { margin: 5px; }
     </style>
 </head>
 <body>
     <div id="login">
-        <h1>Tela de Login</h1>
-        <input type="text" id="username" placeholder="Nome de Usuário">
-        <button onclick="login()">Entrar</button>
-        <p id="loginError" style="color:red;"></p>
+        <h1>Login</h1>
+        <input type="text" id="username" placeholder="Digite seu nome de usuário" />
+        <button class="button" onclick="startGame()">Iniciar Jogo</button>
     </div>
 
     <div id="menu">
         <h1>Menu Principal</h1>
-        <button onclick="iniciarJogo()">Iniciar Jogo</button>
-        <button onclick="mostrarInstrucoes()">Instruções</button>
+        <button class="button" onclick="iniciarJogo()">Iniciar Aventura</button>
+        <button class="button" onclick="mostrarInstrucoes()">Instruções</button>
+        <button class="button" onclick="mostrarArvoreHabilidades()">Árvore de Habilidades</button>
     </div>
 
     <div id="game">
-        <h1>Dragon Battle: Legends Awaken</h1>
-        <div id="hud">
-            <h2>HUD</h2>
-            <p>Vida: <span id="vida">❤️❤️❤️</span></p>
-            <p>Ki: <span id="ki">🔵🔵🔵</span></p>
-            <p>Arma: <span id="arma">Nenhuma</span></p>
-            <p>Experiência: <span id="experiencia">0</span></p>
-            <button onclick="mostrarStatus()">Status</button>
-        </div>
-
-        <div id="mapa"></div>
-
+        <h1>Jogo em Andamento</h1>
         <div id="status">
-            <h2>Status do Jogador</h2>
-            <p>Vida: <span id="vidaTotal">3 pontos</span></p>
-            <p>Ki: <span id="kiTotal">3 pontos</span></p>
-            <p>Nível: <span id="nivel">1</span></p>
-            <p>Transformação: <span id="transformacao">Nenhuma</span></p>
-            <p>Habilidades: <span id="habilidades">Nenhuma</span></p>
-            <button onclick="esconderStatus()">Fechar</button>
+            <p id="vida">Vida: ❤️❤️❤️</p>
+            <p id="ki">Ki: 🔵</p>
+            <p id="nivel">Nível: 1</p>
+            <p id="experiencia">Experiência: 0</p>
+            <p id="habilidade">Habilidade: Nenhuma</p>
         </div>
+        <button class="button" onclick="transformar()">Transformar</button>
+        <button class="button" onclick="usarHabilidade()">Usar Habilidade</button>
+    </div>
 
-        <div id="narrativa" class="narrativa"></div>
+    <div id="skillTree">
+        <h1>Árvore de Habilidades</h1>
+        <button class="button" onclick="unlockKiBlast()">Desbloquear Ki Blast (Custo: 2 pontos)</button>
+        <button class="button" onclick="unlockKamehameha()">Desbloquear Kamehameha (Custo: 5 pontos)</button>
+        <button class="button" onclick="voltarMenu()">Voltar</button>
     </div>
 
     <script>
-        let currentPlayerName = "";
-        const mapRows = 10;
-        const mapCols = 10;
-        const playerSymbol = '👤';
-        const enemySymbol = '👹';
-        const chestSymbol = '🪙';
-        let playerPosition = { x: 1, y: 1 };
-        let enemyPosition = { x: 8, y: 8 };
-        let chestPosition = { x: 5, y: 5 }; // Posição do baú
         let playerLife = 3;
-        let playerKi = 3;
-        let experiencia = 0;
+        let playerKi = 0;
         let nivel = 1;
-        let hasSword = false; // Status da arma
-        let transformacaoAtiva = false; // Status da transformação
-        let habilidades = [];
-        const maxNivel = 5; // Nível máximo
+        let experiencia = 0;
+        let transformacaoAtiva = false;
+        let habilidades = {
+            kiBlast: false,
+            kamehameha: false,
+        };
 
-        // Função de Login
-        function login() {
-            const usernameInput = document.getElementById('username').value;
-            if (usernameInput) {
-                currentPlayerName = usernameInput;
+        document.getElementById('login').style.display = 'block'; // Mostrar a tela de login
+
+        function startGame() {
+            const username = document.getElementById('username').value;
+            if (username) {
+                alert(`Bem-vindo, ${username}!`);
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('menu').style.display = 'block';
             } else {
-                document.getElementById('loginError').innerText = "Por favor, insira um nome de usuário.";
+                alert('Por favor, insira um nome de usuário.');
             }
         }
 
         function iniciarJogo() {
             document.getElementById('menu').style.display = 'none';
             document.getElementById('game').style.display = 'block';
-            atualizarMapa();
-            document.getElementById('narrativa').innerText = 'Você é um guerreiro em busca de poder e aventura. Explore o mapa e enfrente inimigos!';
-        }
-
-        function mostrarInstrucoes() {
-            alert("Use as teclas de seta para se mover. Z para coletar a espada, T para transformar.");
-        }
-
-        function atualizarMapa() {
-            const mapa = [];
-            for (let i = 0; i < mapRows; i++) {
-                let linha = '';
-                for (let j = 0; j < mapCols; j++) {
-                    if (i === playerPosition.y && j === playerPosition.x) {
-                        linha += `<span class="player">${playerSymbol}</span>`;
-                    } else if (i === enemyPosition.y && j === enemyPosition.x) {
-                        linha += `<span class="enemy">${enemySymbol}</span>`;
-                    } else if (i === chestPosition.y && j === chestPosition.x) {
-                        linha += `<span class="chest">${chestSymbol}</span>`;
-                    } else {
-                        linha += '🟩'; // Blocos do mapa
-                    }
-                }
-                mapa.push(linha);
-            }
-            document.getElementById('mapa').innerHTML = mapa.join('<br>');
-        }
-
-        function mostrarStatus() {
-            document.getElementById('vidaTotal').innerText = playerLife + ' pontos';
-            document.getElementById('kiTotal').innerText = playerKi + ' pontos';
-            document.getElementById('nivel').innerText = nivel;
-            document.getElementById('transformacao').innerText = transformacaoAtiva ? 'Super Saiyajin' : 'Nenhuma';
-            document.getElementById('habilidades').innerText = habilidades.length > 0 ? habilidades.join(', ') : 'Nenhuma';
-            document.getElementById('status').style.display = 'block';
-        }
-
-        function esconderStatus() {
-            document.getElementById('status').style.display = 'none';
-        }
-
-        function moverPlayer(direcao) {
-            if (direcao === 'up' && playerPosition.y > 0) playerPosition.y--;
-            if (direcao === 'down' && playerPosition.y < mapRows - 1) playerPosition.y++;
-            if (direcao === 'left' && playerPosition.x > 0) playerPosition.x--;
-            if (direcao === 'right' && playerPosition.x < mapCols - 1) playerPosition.x++;
-
-            atualizarMapa();
-            checarCombate();
-            checarBaú();
-        }
-
-        function checarCombate() {
-            if (playerPosition.x === enemyPosition.x && playerPosition.y === enemyPosition.y) {
-                alert('Você encontrou o inimigo! Preparar para lutar!');
-                iniciarCombate();
-            }
-        }
-
-        function checarBaú() {
-            if (playerPosition.x === chestPosition.x && playerPosition.y === chestPosition.y) {
-                alert('Você encontrou um baú! Você coletou uma espada e 1 ponto de vida!');
-                hasSword = true;
-                document.getElementById('arma').innerText = 'Espada';
-                playerLife += 1;
-                document.getElementById('vida').innerText = '❤️❤️❤️❤️';
-                experiencia += 1;
-                document.getElementById('experiencia').innerText = experiencia;
-                resetarBaú(); // Reposicionar o baú
-            }
-        }
-
-        function resetarBaú() {
-            chestPosition.x = Math.floor(Math.random() * mapCols);
-            chestPosition.y = Math.floor(Math.random() * mapRows);
-            while ((chestPosition.x === playerPosition.x && chestPosition.y === playerPosition.y) ||
-                   (chestPosition.x === enemyPosition.x && chestPosition.y === enemyPosition.y)) {
-                chestPosition.x = Math.floor(Math.random() * mapCols);
-                chestPosition.y = Math.floor(Math.random() * mapRows);
-            }
+            iniciarCombate();
         }
 
         function iniciarCombate() {
+            // Simulando um combate simples
             while (playerLife > 0) {
-                if (hasSword) {
-                    alert('Você atacou o inimigo e o derrotou!');
-                    experiencia += 2;
-                    document.getElementById('experiencia').innerText = experiencia;
-                    ganharNivel();
-                    break;
+                alert('Você encontrou um inimigo!');
+                if (transformacaoAtiva) {
+                    alert('Você atacou o inimigo com Kamehameha!');
+                    experiencia += 3;
                 } else {
-                    alert('Você não tem uma arma! O inimigo ataca.');
+                    alert('Você não está transformado. O inimigo ataca.');
                     playerLife -= 1; // O inimigo ataca
-                    document.getElementById('vida').innerText = '❤️❤️❤️'.slice(0, playerLife);
-                    if (playerLife <= 0) {
-                        alert('Você foi derrotado! Jogo encerrado.');
-                        break;
-                    }
+                }
+                document.getElementById('vida').innerText = 'Vida: ❤️'.repeat(playerLife);
+                document.getElementById('experiencia').innerText = `Experiência: ${experiencia}`;
+
+                if (experiencia >= 5) {
+                    nivel++;
+                    alert(`Você subiu de nível! Nível atual: ${nivel}`);
                 }
             }
-        }
 
-        function ganharNivel() {
-            if (experiencia >= 5 && nivel < maxNivel) {
-                nivel++;
-                alert('Você subiu de nível! Nível atual: ' + nivel);
+            if (playerLife <= 0) {
+                alert('Você foi derrotado! Jogo encerrado.');
             }
         }
 
@@ -243,22 +105,57 @@
                 transformacaoAtiva = true;
                 playerKi += 1; // Ganho de Ki ao se transformar
                 alert('Você se transformou em Super Saiyajin!');
-                document.getElementById('transformacao').innerText = 'Super Saiyajin';
+                document.getElementById('ki').innerText = 'Ki: 🔵🔵'; // Aumenta o Ki
             } else {
                 alert('Você precisa ser pelo menos nível 3 para se transformar!');
             }
         }
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowUp') moverPlayer('up');
-            if (event.key === 'ArrowDown') moverPlayer('down');
-            if (event.key === 'ArrowLeft') moverPlayer('left');
-            if (event.key === 'ArrowRight') moverPlayer('right');
-            if (event.key === 'z') coletarArma(); // Tecla 'Z' para coletar a arma
-            if (event.key === 't') transformar(); // Tecla 'T' para transformação
-        });
+        function usarHabilidade() {
+            if (habilidades.kiBlast) {
+                alert('Você usou Ki Blast!');
+            } else if (habilidades.kamehameha) {
+                alert('Você usou Kamehameha!');
+            } else {
+                alert('Você não tem habilidades desbloqueadas!');
+            }
+        }
 
-        document.getElementById('login').style.display = 'block'; // Mostrar a tela de login
+        function mostrarArvoreHabilidades() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('skillTree').style.display = 'block';
+        }
+
+        function unlockKiBlast() {
+            if (experiencia >= 2) {
+                habilidades.kiBlast = true;
+                experiencia -= 2;
+                alert('Ki Blast desbloqueado!');
+                document.getElementById('experiencia').innerText = `Experiência: ${experiencia}`;
+            } else {
+                alert('Você não tem experiência suficiente para desbloquear Ki Blast!');
+            }
+        }
+
+        function unlockKamehameha() {
+            if (experiencia >= 5) {
+                habilidades.kamehameha = true;
+                experiencia -= 5;
+                alert('Kamehameha desbloqueado!');
+                document.getElementById('experiencia').innerText = `Experiência: ${experiencia}`;
+            } else {
+                alert('Você não tem experiência suficiente para desbloquear Kamehameha!');
+            }
+        }
+
+        function voltarMenu() {
+            document.getElementById('skillTree').style.display = 'none';
+            document.getElementById('menu').style.display = 'block';
+        }
+
+        function mostrarInstrucoes() {
+            alert('Use as setas para mover, pressione "Transformar" para se transformar e "Usar Habilidade" para atacar.');
+        }
 
     </script>
 </body>
