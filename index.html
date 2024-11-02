@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo Dragon Ball Online</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #282c34;
+            color: white;
+            text-align: center;
+        }
+        #menu, #game, #arena {
+            display: none;
+        }
+        #map {
+            position: relative;
+            width: 600px; 
+            height: 600px; 
+            margin: 20px auto;
+            border: 1px solid #fff;
+            overflow: hidden;
+            background-color: #444; /* Cor do fundo do mapa */
+        }
+        .player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #00ff00; /* Cor do jogador */
+        }
+        .item {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #ffcc00; /* Cor do item */
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #status, #arenaStatus {
+            margin: 20px;
+            text-align: left;
+        }
+        #arenaMap {
+            width: 600px; 
+            height: 400px; 
+            border: 1px solid #fff; 
+            margin: auto; 
+            background-color: #444;
+            position: relative;
+        }
+        .arenaPlayer {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: red; /* Cor do jogador na arena */
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo Dragon Ball Online</h1>
+    <div id="menu">
+        <button id="startButton">Iniciar Aventura</button>
+        <button id="arenaButton">Arena PvP</button>
+    </div>
+    <div id="game">
+        <button id="backButton">Voltar ao Menu</button>
+        <div id="status"></div>
+        <div id="map"></div>
+    </div>
+    <div id="arena">
+        <button id="backArenaButton">Voltar ao Menu</button>
+        <h2>Arena PvP</h2>
+        <div id="arenaStatus"></div>
+        <div id="arenaMap"></div>
+        <button id="attackButton">Atacar</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const mapDiv = document.getElementById('map');
+        const startButton = document.getElementById('startButton');
+        const arenaButton = document.getElementById('arenaButton');
+        const backButton = document.getElementById('backButton');
+        const backArenaButton = document.getElementById('backArenaButton');
+        const attackButton = document.getElementById('attackButton');
+        let players = {};
+        let items = {};
+        let arenaPlayers = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('menu').style.display = 'block';
+
+            startButton.addEventListener('click', () => {
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('game').style.display = 'block';
+                socket.emit('startGame');
+            });
+
+            arenaButton.addEventListener('click', () => {
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('arena').style.display = 'block';
+                socket.emit('joinArena');
+            });
+
+            backButton.addEventListener('click', () => {
+                document.getElementById('game').style.display = 'none';
+                document.getElementById('menu').style.display = 'block';
+            });
+
+            backArenaButton.addEventListener('click', () => {
+                document.getElementById('arena').style.display = 'none';
+                document.getElementById('menu').style.display = 'block';
+            });
+
+            attackButton.addEventListener('click', () => {
+                const targetId = prompt("Digite o ID do jogador a atacar:");
+                if (targetId) {
+                    socket.emit('attack', targetId);
+                }
+            });
+        });
+
+        socket.on('updatePlayers', (updatedPlayers) => {
+            players = updatedPlayers;
+            atualizarMapa();
+            atualizarStatus();
+        });
+
+        socket.on('updateItems', (updatedItems) => {
+            items = updatedItems;
+            atualizarLoot();
+        });
+
+        socket.on('updateArena', (updatedArenaPlayers) => {
+            arenaPlayers = updatedArenaPlayers;
+            atualizarArena();
+            atualizarArenaStatus();
+        });
+
+        function atualizarMapa() {
+            mapDiv.innerHTML = ''; // Limpa o mapa
+            for (const id in players) {
+                const player = players[id];
+                const playerDiv = document.createElement('div');
+                playerDiv.classList.add('player');
+                playerDiv.style.left = player.x * 30 + 'px'; // Ajuste a escala
+                playerDiv.style.top = player.y * 30 + 'px'; // Ajuste a escala
+                mapDiv.appendChild(playerDiv);
+            }
+        }
+
+        function atualizarLoot() {
+            const lootDiv = document.createElement('div');
+            lootDiv.innerHTML = ''; // Limpa o loot
+            for (const item of items) {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('item');
+                itemDiv.style.left = item.x * 30 + 'px'; // Ajuste a escala
+                itemDiv.style.top = item.y * 30 + 'px'; // Ajuste a escala
+                lootDiv.appendChild(itemDiv);
+            }
+            mapDiv.appendChild(lootDiv);
+        }
+
+        function atualizarArena() {
+            const arenaMapDiv = document.getElementById('arenaMap');
+            arenaMapDiv.innerHTML = ''; // Limpa a arena
+            for (const id in arenaPlayers) {
+                const player = arenaPlayers[id];
+                const playerDiv = document.createElement('div');
+                playerDiv.classList.add('arenaPlayer');
+                playerDiv.style.left = Math.random() * 580 + 'px'; // Posição aleatória na arena
+                playerDiv.style.top = Math.random() * 380 + 'px'; // Posição aleatória na arena
+                arenaMapDiv.appendChild(playerDiv);
+            }
+        }
+
+        function atualizarStatus() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<h2>Status</h2>';
+            for (const id in players) {
+                const player = players[id];
+                statusDiv.innerHTML += `<p>${player.name}: Vida: ${player.health}, Nível: ${player.level}</p>`;
+            }
+        }
+
+        function atualizarArenaStatus() {
+            const arenaStatusDiv = document.getElementById('arenaStatus');
+            arenaStatusDiv.innerHTML = '<h2>Status da Arena</h2>';
+            for (const id in arenaPlayers) {
+                const player = arenaPlayers[id];
+                arenaStatusDiv.innerHTML += `<p>Jogador ${player.id}: Vida: ${player.health}, Nível: ${player.level}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
