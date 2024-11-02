@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Seed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 20px;
+        }
+        #seed {
+            font-size: 24px;
+            margin: 20px 0;
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerador de Seed Aleatória</h1>
+    <div id="seed">Gerando...</div>
+
+    <script>
+        function gerarSeed() {
+            const numero1 = Math.floor(Math.random() * 10) + 1; // Gera um número entre 1 e 10
+            const letra = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Gera uma letra de A a Z
+            const numero2 = Math.floor(Math.random() * 10) - 5; // Gera um número entre -5 e 4
+
+            return `${numero1}${letra}${numero2}`;
+        }
+
+        document.getElementById('seed').innerText = gerarSeed();
+    </script>
+</body>
+</html>
