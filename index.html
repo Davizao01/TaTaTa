@@ -12,11 +12,9 @@
             background-color: #87CEEB; /* Cor do céu */
         }
         #gameCanvas {
-            background-color: #87CEEB; /* Cor do céu */
             position: relative;
             width: 100vw;
             height: 100vh;
-            overflow: hidden;
         }
         .ground {
             position: absolute;
@@ -28,13 +26,18 @@
         }
         .player, .enemy {
             position: absolute;
-            bottom: 20px; /* Altura do chão */
             width: 40px;
             height: 40px;
             background-color: #FFD700; /* Cor do jogador */
         }
         .enemy {
             background-color: #FF0000; /* Cor dos zumbis */
+        }
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
         }
     </style>
 </head>
@@ -61,7 +64,8 @@
         let playerXP = 0;
         let gravity = 1;
         let isJumping = false;
-        let jumpStrength = 15;
+        let jumpStrength = 20;
+        let jumpCount = 0;
 
         // Função para atualizar HUD
         function updateHUD() {
@@ -84,9 +88,10 @@
 
         // Função para pular
         function jump() {
-            if (!isJumping) {
+            if (!isJumping && jumpCount < 2) { // Permite 2 pulos
                 isJumping = true;
-                let jumpInterval = setInterval(() => {
+                jumpCount++;
+                const jumpInterval = setInterval(() => {
                     const playerBottom = parseInt(window.getComputedStyle(player).bottom);
                     if (playerBottom < jumpStrength + 20) {
                         player.style.bottom = (playerBottom + jumpStrength) + 'px';
@@ -102,15 +107,16 @@
             const enemy = document.createElement('div');
             enemy.className = 'enemy';
             enemy.style.left = Math.random() * (window.innerWidth - 40) + 'px';
+            enemy.style.bottom = '20px'; // Altura inicial dos inimigos
             gameCanvas.appendChild(enemy);
 
             // Lógica de movimento do inimigo
-            setInterval(() => {
+            const enemyInterval = setInterval(() => {
                 const enemyBottom = parseInt(window.getComputedStyle(enemy).bottom);
-                if (enemyBottom > 20) {
+                if (enemyBottom > 0) {
                     enemy.style.bottom = (enemyBottom - gravity) + 'px';
                 } else {
-                    // Inimigo atinge o chão
+                    clearInterval(enemyInterval);
                     enemy.remove(); // Remove o inimigo se atingir o chão
                 }
             }, 100);
