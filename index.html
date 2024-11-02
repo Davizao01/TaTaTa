@@ -3,105 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo com HUD e Mapa</title>
+    <title>Jogo de Aventura</title>
     <style>
         body {
+            margin: 0;
+            overflow: hidden;
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            text-align: center;
-            padding: 20px;
+            background-color: #87CEEB; /* Cor do céu */
         }
-        #hud {
-            margin-bottom: 20px;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ccc;
-            display: inline-block;
+        #gameCanvas {
+            background-color: #87CEEB; /* Cor do céu */
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
         }
-        #mapa {
-            font-family: monospace;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ccc;
-            white-space: pre;
-            text-align: left;
-            margin: 0 auto;
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background-color: #228B22; /* Cor da grama */
         }
-        #status {
-            display: none;
-            margin-top: 20px;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ccc;
+        .player, .enemy {
+            position: absolute;
+            bottom: 20px; /* Altura do chão */
+            width: 40px;
+            height: 40px;
+            background-color: #FFD700; /* Cor do jogador */
         }
-        button {
-            margin-top: 10px;
+        .enemy {
+            background-color: #FF0000; /* Cor dos zumbis */
         }
     </style>
 </head>
 <body>
-    <h1>Jogo com HUD e Mapa</h1>
-    
-    <div id="hud">
-        <h2>HUD</h2>
-        <p>Vida: <span id="vida">❤️❤️❤️</span></p>
-        <p>Ki: <span id="ki">🔵🔵🔵</span></p>
-        <p>Resistência: <span id="resistencia">🟣🟣</span></p>
-        <button onclick="mostrarStatus()">Status</button>
+    <div id="gameCanvas">
+        <div id="player" class="player"></div>
+        <div class="ground"></div>
     </div>
-
-    <div id="mapa"></div>
-
-    <div id="status">
-        <h2>Status do Jogador</h2>
-        <p>Vida: 3 pontos</p>
-        <p>Ki: 3 pontos</p>
-        <p>Resistência: 2 pontos</p>
-        <button onclick="esconderStatus()">Fechar</button>
+    <div id="hud">
+        <p>Nível: <span id="level">0</span></p>
+        <p>XP: <span id="xp">0</span></p>
+        <button id="statusButton">Status</button>
     </div>
 
     <script>
-        function gerarMapa(seed) {
-            // Exemplo básico de geração de mapa a partir da seed
-            const map = [];
-            const rows = 10; // Altura do mapa
-            const cols = 10; // Largura do mapa
-            const playerSymbol = '👤';
-            let playerPosition = { x: Math.floor(cols / 2), y: Math.floor(rows / 2) }; // Posição inicial do jogador
+        // Variáveis do jogo
+        const player = document.getElementById('player');
+        const gameCanvas = document.getElementById('gameCanvas');
+        const levelDisplay = document.getElementById('level');
+        const xpDisplay = document.getElementById('xp');
+        const statusButton = document.getElementById('statusButton');
 
-            for (let i = 0; i < rows; i++) {
-                let row = '';
-                for (let j = 0; j < cols; j++) {
-                    if (i === playerPosition.y && j === playerPosition.x) {
-                        row += playerSymbol; // Adiciona o jogador na posição
-                    } else {
-                        row += Math.random() > 0.5 ? '🟩' : '🟫'; // Blocos aleatórios
-                    }
+        let playerLevel = 0;
+        let playerXP = 0;
+        let gravity = 1;
+        let isJumping = false;
+        let jumpStrength = 15;
+
+        // Função para atualizar HUD
+        function updateHUD() {
+            levelDisplay.innerText = playerLevel;
+            xpDisplay.innerText = playerXP;
+        }
+
+        // Função de gravidade e pulo
+        function applyGravity() {
+            if (isJumping) {
+                const playerBottom = parseInt(window.getComputedStyle(player).bottom);
+                if (playerBottom > 20) {
+                    player.style.bottom = (playerBottom - gravity) + 'px';
+                } else {
+                    isJumping = false; // O jogador volta ao chão
+                    player.style.bottom = '20px';
                 }
-                map.push(row);
             }
-            return map.join('\n');
         }
 
-        function mostrarStatus() {
-            document.getElementById('status').style.display = 'block';
+        // Função para pular
+        function jump() {
+            if (!isJumping) {
+                isJumping = true;
+                let jumpInterval = setInterval(() => {
+                    const playerBottom = parseInt(window.getComputedStyle(player).bottom);
+                    if (playerBottom < jumpStrength + 20) {
+                        player.style.bottom = (playerBottom + jumpStrength) + 'px';
+                    } else {
+                        clearInterval(jumpInterval);
+                    }
+                }, 20);
+            }
         }
 
-        function esconderStatus() {
-            document.getElementById('status').style.display = 'none';
+        // Função para gerar inimigos
+        function spawnEnemy() {
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            enemy.style.left = Math.random() * (window.innerWidth - 40) + 'px';
+            gameCanvas.appendChild(enemy);
+
+            // Lógica de movimento do inimigo
+            setInterval(() => {
+                const enemyBottom = parseInt(window.getComputedStyle(enemy).bottom);
+                if (enemyBottom > 20) {
+                    enemy.style.bottom = (enemyBottom - gravity) + 'px';
+                } else {
+                    // Inimigo atinge o chão
+                    enemy.remove(); // Remove o inimigo se atingir o chão
+                }
+            }, 100);
         }
 
-        function gerarSeed() {
-            const numero1 = Math.floor(Math.random() * 10) + 1; // Gera um número entre 1 e 10
-            const letra = String.fromCharCode(Math.floor(Math.random() * 26) + 65); // Gera uma letra de A a Z
-            const numero2 = Math.floor(Math.random() * 10) - 5; // Gera um número entre -5 e 4
-
-            return `${numero1}${letra}${numero2}`;
+        // Gerar XP aleatória quando um inimigo é derrotado
+        function enemyDefeated() {
+            const xpGained = Math.floor(Math.random() * 20) + 1; // XP aleatório entre 1 e 20
+            playerXP += xpGained;
+            if (playerXP >= 100) { // Aumenta o nível a cada 100 XP
+                playerLevel++;
+                playerXP = 0; // Resetando XP após subir de nível
+            }
+            updateHUD();
         }
 
-        // Gera a seed e o mapa ao carregar a página
-        const seed = gerarSeed();
-        document.getElementById('mapa').innerText = gerarMapa(seed);
+        // Controle de eventos
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                jump(); // Pula ao pressionar a barra de espaço
+            }
+        });
+
+        // Spawn de inimigos a cada 3 segundos
+        setInterval(spawnEnemy, 3000);
+
+        // Atualização da gravidade
+        setInterval(applyGravity, 20);
+
+        // Atualização do HUD
+        updateHUD();
+
+        // Exibir status
+        statusButton.addEventListener('click', () => {
+            alert(`Nível: ${playerLevel}\nXP: ${playerXP}`);
+        });
     </script>
 </body>
 </html>
